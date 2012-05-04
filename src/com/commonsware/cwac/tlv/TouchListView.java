@@ -393,9 +393,9 @@ public class TouchListView extends ListView {
 
                             //dont do expansion onDown - this will be done when the dragView is drawn for the first
                             //time to avoid flicker
-                            if(action != MotionEvent.ACTION_DOWN){
+                            //if(action != MotionEvent.ACTION_DOWN){
                                 doExpansion();
-                            }
+                            //}
                         }
                         int speed = 0;
                         adjustScrollBounds(y);
@@ -443,13 +443,7 @@ public class TouchListView extends ListView {
 
         Log.d("cwac","topMargin:"+mWindowParams.topMargin+" left:"+mWindowParams.leftMargin);
 
-        //use img view wrapper to avoid flicker (see class doc)
-        ImageView v = new ImageViewWrapper(getContext(), new Runnable() {
-            @Override
-            public void run() {
-                doExpansion();
-            }
-        });
+        ImageView v = new ImageView(getContext());
 
         v.setBackgroundColor(dragndropBackgroundColor);
         v.setImageBitmap(bm);
@@ -457,6 +451,8 @@ public class TouchListView extends ListView {
 
         mContentView.addView(v, mWindowParams);
         mDragView = v;
+
+        doExpansion();
     }
 
     private void dragView(int x, int y) {
@@ -499,34 +495,5 @@ public class TouchListView extends ListView {
 
     public interface RemoveListener {
         void remove(int which);
-    }
-
-    /**
-     * Quick fix. This wrapper will execute the passed in runnable the first time its drawn. When adding a view to
-     * the WindowManager it seems to have a short delay before being drawn. I have tried invalidating the view and
-     * also the root view of the window bit neither seems to work :(
-     */
-    private static class ImageViewWrapper extends ImageView{
-
-        private Runnable mRunnable;
-
-        /**
-         * @param context
-         * @param runnable execute on first draw - put any hiding view logic in here
-         */
-        public ImageViewWrapper(Context context, Runnable runnable) {
-            super(context);
-            mRunnable = runnable;
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-
-            if(mRunnable != null){
-                mRunnable.run();
-                mRunnable = null;
-            }
-        }
     }
 }
