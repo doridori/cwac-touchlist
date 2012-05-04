@@ -436,7 +436,6 @@ public class TouchListView extends ListView {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         mWindowParams.gravity = Gravity.TOP | Gravity.LEFT;
-        //mWindowParams.
         mWindowParams.leftMargin = x;
         mWindowParams.topMargin = y - mDragPoint;
 
@@ -453,8 +452,9 @@ public class TouchListView extends ListView {
     }
 
     private void dragView(int x, int y) {
-        mWindowParams.topMargin = y - mDragPoint;
-        Log.d("cwac","drag/topMargin:"+mWindowParams.topMargin+" left:"+mWindowParams.leftMargin);
+        //at a minimum this should not go below listView height - bitmap height
+        mWindowParams.topMargin = Math.max(
+                Math.min(y - mDragPoint, getHeight() - mDragView.getHeight()), 0);
         mContentView.updateViewLayout(mDragView, mWindowParams);
     }
 
