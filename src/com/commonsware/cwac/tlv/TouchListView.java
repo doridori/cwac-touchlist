@@ -20,9 +20,11 @@ package com.commonsware.cwac.tlv;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -375,7 +377,12 @@ public class TouchListView extends ListView {
                                 mDragListener.drag(mDragPos, itemnum);
                             }
                             mDragPos = itemnum;
-                            doExpansion();
+
+                            //dont do expansion onDown - this will be done when the dragView is drawn for the first
+                            //time to avoid flicker
+                            if(action != MotionEvent.ACTION_DOWN){
+                                doExpansion();
+                            }
                         }
                         int speed = 0;
                         adjustScrollBounds(y);
@@ -423,19 +430,21 @@ public class TouchListView extends ListView {
         mWindowParams.format = PixelFormat.TRANSLUCENT;
         mWindowParams.windowAnimations = 0;
 
-        ImageView v = new ImageView(getContext());
-//        int backGroundColor = getContext().getResources().getColor(R.color.dragndrop_background);
+        //use img view wrapper to avoid flicker (see class doc)
+        ImageView v = new ImageViewWrapper(getContext(), new Runnable() {
+            @Override
+            public void run() {
+                doExpansion();
+            }
+        });
+
         v.setBackgroundColor(dragndropBackgroundColor);
         v.setImageBitmap(bm);
         mDragBitmap = bm;
 
-        mWindowManager = (WindowManager) getContext().getSystemService("window");
+        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         mWindowManager.addView(v, mWindowParams);
         mDragView = v;
-
-        TextView view = new TextView(getContext());
-        view.setText("test!");
-        mWindowManager.addView(view, mWindowParams);
     }
 
     private void dragView(int x, int y) {
@@ -453,6 +462,7 @@ public class TouchListView extends ListView {
             }
             mWindowParams.alpha = alpha;
         }
+        Log.d("cwac", "alpha:" + alpha);
         mWindowParams.y = y - mDragPoint + mCoordOffset;
         mWindowManager.updateViewLayout(mDragView, mWindowParams);
     }
@@ -492,5 +502,34 @@ public class TouchListView extends ListView {
 
     public interface RemoveListener {
         void remove(int which);
+    }
+
+    /**
+     * Quick fix. This wrapper will execute the passed in runnable the first time its drawn. When adding a view to
+     * the WindowManager it seems to have a short delay before being drawn. I have tried invalidating the view and
+     * also the root view of the window bit neither seems to work :(
+     */
+    private static class ImageViewWrapper extends ImageView{
+
+        private Runnable mRunnable;
+
+        /**
+         * @param context
+         * @param runnable execute on first draw - put any hiding view logic in here
+         */
+        public ImageViewWrapper(Context context, Runnable runnable) {
+            super(context);
+            mRunnable = runnable;
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+
+            if(mRunnable != null){
+                mRunnable.run();
+                mRunnable = null;
+            }
+        }
     }
 }
