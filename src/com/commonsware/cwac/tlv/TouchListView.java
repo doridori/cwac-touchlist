@@ -33,19 +33,19 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.GestureDetector.SimpleOnGestureListener;
-import android.widget.AdapterView;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.*;
 
 public class TouchListView extends ListView {
     private ImageView mDragView;
-    private WindowManager mWindowManager;
-    private WindowManager.LayoutParams mWindowParams;
+    private FrameLayout mContentView;
+    private FrameLayout.LayoutParams mWindowParams;
     private int mDragPos;      // which item is being dragged
     private int mFirstDragPos; // where was the dragged item originally
     private int mDragPoint;    // at what offset inside the item did the user grab it
-    private int mCoordOffset;  // the difference between screen coordinates and coordinates in this view
+    //private int mCoordOffset;  // the difference between screen coordinates and coordinates in this view
     private DragListener mDragListener;
     private DropListener mDropListener;
     private RemoveListener mRemoveListener;
@@ -71,6 +71,9 @@ public class TouchListView extends ListView {
 
     public TouchListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        View view = getRootView();
+
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
@@ -155,7 +158,6 @@ public class TouchListView extends ListView {
 
                     if (isDraggableRow(item)) {
                         mDragPoint = y - item.getTop();
-                        mCoordOffset = ((int) ev.getRawY()) - y;
                         View dragger = item.findViewById(grabberId);
                         Rect r = mTempRect;
 //										dragger.getDrawingRect(r);
@@ -264,9 +266,14 @@ public class TouchListView extends ListView {
                 ViewGroup.LayoutParams params = v.getLayoutParams();
                 params.height = mItemHeightNormal;
                 v.setLayoutParams(params);
-                v.setVisibility(View.VISIBLE);
+                makeRowVisible(v);
             }
         }
+    }
+
+    private void makeRowVisible(View v){
+        v.setVisibility(View.VISIBLE);
+        //v.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in));
     }
 
     /* Adjust visibility and size to make it appear as though
@@ -324,7 +331,13 @@ public class TouchListView extends ListView {
                 ViewGroup.LayoutParams params = loopChild.getLayoutParams();
                 params.height = height;
                 loopChild.setLayoutParams(params);
-                loopChild.setVisibility(visibility);
+
+                if(loopChild.getVisibility() == View.INVISIBLE && visibility == View.VISIBLE){
+                    makeRowVisible(loopChild);
+                }else{
+                    loopChild.setVisibility(visibility);
+                }
+
             }
         }
         // Request re-layout since we changed the items layout
@@ -414,21 +427,21 @@ public class TouchListView extends ListView {
     }
 
     private void startDragging(Bitmap bm, int x, int y) {
+        Log.d("cwac", "x:"+x+" y:"+y);
         stopDragging();
 
-        mWindowParams = new WindowManager.LayoutParams();
-        mWindowParams.gravity = Gravity.TOP | Gravity.LEFT;
-        mWindowParams.x = x;
-        mWindowParams.y = y - mDragPoint + mCoordOffset;
+        if(mContentView == null)
+            mContentView = (FrameLayout) getRootView().findViewById(android.R.id.content);
 
-        mWindowParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        mWindowParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
-        mWindowParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
-        mWindowParams.format = PixelFormat.TRANSLUCENT;
-        mWindowParams.windowAnimations = 0;
+        mWindowParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        mWindowParams.gravity = Gravity.TOP | Gravity.LEFT;
+        //mWindowParams.
+        mWindowParams.leftMargin = 0;//x;
+        mWindowParams.topMargin = 0;//y - mDragPoint + mCoordOffset;
+
+        Log.d("cwac","topMargin:"+mWindowParams.topMargin+" left:"+mWindowParams.leftMargin);
 
         //use img view wrapper to avoid flicker (see class doc)
         ImageView v = new ImageViewWrapper(getContext(), new Runnable() {
@@ -442,35 +455,19 @@ public class TouchListView extends ListView {
         v.setImageBitmap(bm);
         mDragBitmap = bm;
 
-        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        mWindowManager.addView(v, mWindowParams);
+        mContentView.addView(v, mWindowParams);
         mDragView = v;
     }
 
     private void dragView(int x, int y) {
-        float alpha = 1.0f;
-        int width = mDragView.getWidth();
-
-        if (mRemoveMode == SLIDE_RIGHT) {
-            if (x > width / 2) {
-                alpha = ((float) (width - x)) / (width / 2);
-            }
-            mWindowParams.alpha = alpha;
-        } else if (mRemoveMode == SLIDE_LEFT) {
-            if (x < width / 2) {
-                alpha = ((float) x) / (width / 2);
-            }
-            mWindowParams.alpha = alpha;
-        }
-        Log.d("cwac", "alpha:" + alpha);
-        mWindowParams.y = y - mDragPoint + mCoordOffset;
-        mWindowManager.updateViewLayout(mDragView, mWindowParams);
+        mWindowParams.topMargin = y - mDragPoint;
+        Log.d("cwac","drag/topMargin:"+mWindowParams.topMargin+" left:"+mWindowParams.leftMargin);
+        mContentView.updateViewLayout(mDragView, mWindowParams);
     }
 
     private void stopDragging() {
         if (mDragView != null) {
-            WindowManager wm = (WindowManager) getContext().getSystemService("window");
-            wm.removeView(mDragView);
+            mContentView.removeView(mDragView);
             mDragView.setImageDrawable(null);
             mDragView = null;
         }
