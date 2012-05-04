@@ -273,7 +273,6 @@ public class TouchListView extends ListView {
 
     private void makeRowVisible(View v){
         v.setVisibility(View.VISIBLE);
-        //v.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in));
     }
 
     /* Adjust visibility and size to make it appear as though
@@ -438,8 +437,8 @@ public class TouchListView extends ListView {
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         mWindowParams.gravity = Gravity.TOP | Gravity.LEFT;
         //mWindowParams.
-        mWindowParams.leftMargin = 0;//x;
-        mWindowParams.topMargin = 0;//y - mDragPoint + mCoordOffset;
+        mWindowParams.leftMargin = x;
+        mWindowParams.topMargin = y - mDragPoint;
 
         Log.d("cwac","topMargin:"+mWindowParams.topMargin+" left:"+mWindowParams.leftMargin);
 
@@ -451,8 +450,6 @@ public class TouchListView extends ListView {
 
         mContentView.addView(v, mWindowParams);
         mDragView = v;
-
-        doExpansion();
     }
 
     private void dragView(int x, int y) {
