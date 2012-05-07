@@ -1,3 +1,9 @@
+This is a fork of Mark Murphys `cwac-touchlist`. It has a few
+bug-fixes and so on. Its not perfect (see 'issues') but its 
+a little more stable. I have not touched the deletion swipe 
+stuff and I know of at least one bug there but im not using 
+it. 
+
 CWAC TouchListView
 ==================
 **THIS PROJECT IS DISCONTINUED &mdash; USE AT YOUR OWN RISK**
