@@ -4,6 +4,8 @@ a little more stable. I have not touched the deletion swipe
 stuff and I know of at least one bug there but im not using 
 it. 
 
+Below is the copied readme
+
 CWAC TouchListView
 ==================
 **THIS PROJECT IS DISCONTINUED &mdash; USE AT YOUR OWN RISK**
