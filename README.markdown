@@ -10,6 +10,8 @@ CWAC TouchListView
 ==================
 **THIS PROJECT IS DISCONTINUED &mdash; USE AT YOUR OWN RISK**
 
+*A similar project can be found at https://github.com/bauerca/drag-sort-listview*
+
 The standard `ListView` is a very sophisticated tool, but it
 lacks any sort of drag-and-drop support. The Android open
 source project has an example of implementing drag-and-drop
